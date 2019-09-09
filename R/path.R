@@ -69,11 +69,40 @@ path_wd <- function(..., ext = "") {
 
 #' @describeIn path_math returns the canonical path, eliminating any symbolic
 #'   links and the special references `~`, `~user`, `.`, and `..`, , i.e. it
-#'   calls `path_expand()` (literally) and `path_norm()` (effectively).
+#'   calls `path_expand()` (literally) and `path_norm()` (effectively). Because
+#'   the underlying implementation is prone to errors in certain special cases,
+#'   especially on Windows, `path_real` does use `path_norm()` as a fallback in
+#'   case of error, if the option `fs.path.real.robust` is `TRUE` (it is unset
+#'   by default). If the fallback is triggered, `path_real` will still throw a
+#'   warning about the error, as a reminder to check the result. Note that
+#'   `path_norm()` may return the wrong result particularly when there are
+#'   symbolic links in the path. See e.g. `withr::with_options()` to
+#'   dynamically set `fs.path.real.robust` as needed.
 #' @export
 path_real <- function(path) {
   path <- enc2utf8(path)
   old <- path_expand(path)
+
+  # Attempt to handle errors in path_real using path_norm
+  path_realize_0 <- function(path) {
+    p <- try(realize_(path), silent = TRUE)
+    if (class(p) == "try-error") {
+      if (isTRUE(getOption("fs.path.real.robust"))) {
+        p_prefix <- paste(
+          "Caught the below error in path_real(),",
+          "trying base::normalizePath(mustWork = TRUE)...\n    "
+        )
+        warning(paste0(p_prefix, p))
+        p <- path_tidy(normalizePath(path, winslash = "/", mustWork = TRUE))
+      } else {
+        stop(p)
+      }
+    }
+    p
+  }
+  path_realize <- function(path) {
+    path_tidy(as.character(lapply(path, path_realize_0)))
+  }
 
   # We need to convert all paths to absolute paths, but _not_ to normalize
   # them, so we cannot use `path_abs()`.
@@ -84,13 +113,13 @@ path_real <- function(path) {
   exists <- file_exists(path) == TRUE
 
   # Realize all paths which fully exist
-  old[!is_missing & exists] <- realize_(old[!is_missing & exists])
+  old[!is_missing & exists] <- path_realize(old[!is_missing & exists])
 
   # Handle paths which only partially exist
   realize_one <- function(splits) {
     paths <- Reduce(fs::path, splits, accumulate = TRUE)
     last_link <- which.max(is_link(paths))
-    path(realize_(paths[last_link]), path_join(splits[seq(last_link + 1, length(splits))]))
+    path(path_realize(paths[last_link]), path_join(splits[seq(last_link + 1, length(splits))]))
   }
 
   partial <- !is_missing & !exists
