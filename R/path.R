@@ -69,11 +69,33 @@ path_wd <- function(..., ext = "") {
 
 #' @describeIn path_math returns the canonical path, eliminating any symbolic
 #'   links and the special references `~`, `~user`, `.`, and `..`, , i.e. it
-#'   calls `path_expand()` (literally) and `path_norm()` (effectively).
+#'   calls `path_expand()` (literally) and `path_norm()` (effectively). Because
+#'   the underlying implementation is prone to errors in certain special cases,
+#'   on Windows the default `path_real` will call `path_norm()` if it would
+#'   otherwise raise an error. This behaviour can be suppressed with
+#'   `robust = FALSE`. Where there are symbolic links in the path,
+#'   `robust = FALSE` is recommended.
+#' @param robust Logical to indicate whether `path_norm()` should be
+#' attempted when an error occurs. Defaults to `TRUE` on Windows and `FALSE`
+#' otherwise.
 #' @export
-path_real <- function(path) {
+path_real <- function(path, robust = (.Platform$OS.type == "windows")) {
   path <- enc2utf8(path)
   old <- path_expand(path)
+
+  # Attempt to handle errors with path_norm
+  path_realize <- function(path) {
+    p <- try(realize_(path), silent = TRUE)
+    if (class(p) == "try-error") {
+      if (robust) {
+        warning(p)
+        p <- path_norm(path)
+      } else {
+        stop(p)
+      }
+    }
+    p
+  }
 
   # We need to convert all paths to absolute paths, but _not_ to normalize
   # them, so we cannot use `path_abs()`.
@@ -84,13 +106,13 @@ path_real <- function(path) {
   exists <- file_exists(path) == TRUE
 
   # Realize all paths which fully exist
-  old[!is_missing & exists] <- realize_(old[!is_missing & exists])
+  old[!is_missing & exists] <- path_realize(old[!is_missing & exists])
 
   # Handle paths which only partially exist
   realize_one <- function(splits) {
     paths <- Reduce(fs::path, splits, accumulate = TRUE)
     last_link <- which.max(is_link(paths))
-    path(realize_(paths[last_link]), path_join(splits[seq(last_link + 1, length(splits))]))
+    path(path_realize(paths[last_link]), path_join(splits[seq(last_link + 1, length(splits))]))
   }
 
   partial <- !is_missing & !exists
