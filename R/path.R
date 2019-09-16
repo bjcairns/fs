@@ -71,24 +71,28 @@ path_wd <- function(..., ext = "") {
 #'   links and the special references `~`, `~user`, `.`, and `..`, , i.e. it
 #'   calls `path_expand()` (literally) and `path_norm()` (effectively). Because
 #'   the underlying implementation is prone to errors in certain special cases,
-#'   on Windows the default `path_real` will call `path_norm()` if it would
-#'   otherwise raise an error. This behaviour can be suppressed with
-#'   `robust = FALSE`. Where there are symbolic links in the path,
-#'   `robust = FALSE` is recommended.
-#' @param robust Logical to indicate whether `path_norm()` should be
-#' attempted when an error occurs. Defaults to `TRUE` on Windows and `FALSE`
-#' otherwise.
+#'   especially on Windows, `path_real` does use `path_norm()` as a fallback in
+#'   case of error, if the option `fs.path.real.robust` is `TRUE` (it is unset
+#'   by default). If the fallback is triggered, `path_real` will still throw a
+#'   warning about the error, as a reminder to check the result. Note that
+#'   `path_norm()` may return the wrong result particularly when there are
+#'   symbolic links in the path. See e.g. `withr::with_options()` to
+#'   dynamically set `fs.path.real.robust` as needed.
 #' @export
-path_real <- function(path, robust = (.Platform$OS.type == "windows")) {
+path_real <- function(path) {
   path <- enc2utf8(path)
   old <- path_expand(path)
 
-  # Attempt to handle errors with path_norm
+  # Attempt to handle errors in path_real using path_norm
   path_realize <- function(path) {
     p <- try(realize_(path), silent = TRUE)
     if (class(p) == "try-error") {
-      if (robust) {
-        warning(p)
+      if (isTRUE(getOption("fs.path.real.robust"))) {
+        p_prefix <- paste(
+          "Caught the below error in path_real(),",
+          "trying path_norm()...\n    "
+        )
+        warning(paste0(p_prefix, p))
         p <- path_norm(path)
       } else {
         stop(p)
