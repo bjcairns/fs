@@ -93,7 +93,7 @@ path_real <- function(path) {
           "trying path_norm()...\n    "
         )
         warning(paste0(p_prefix, p))
-        p <- path_norm(path)
+        p <- path_tidy(normalizePath(path, winslash = "/", mustWork = TRUE))
       } else {
         stop(p)
       }
