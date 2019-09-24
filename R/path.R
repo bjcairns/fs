@@ -84,13 +84,13 @@ path_real <- function(path) {
   old <- path_expand(path)
 
   # Attempt to handle errors in path_real using path_norm
-  path_realize <- function(path) {
+  path_realize_0 <- function(path) {
     p <- try(realize_(path), silent = TRUE)
     if (class(p) == "try-error") {
       if (isTRUE(getOption("fs.path.real.robust"))) {
         p_prefix <- paste(
           "Caught the below error in path_real(),",
-          "trying path_norm()...\n    "
+          "trying base::normalizePath(mustWork = TRUE)...\n    "
         )
         warning(paste0(p_prefix, p))
         p <- path_tidy(normalizePath(path, winslash = "/", mustWork = TRUE))
@@ -99,6 +99,9 @@ path_real <- function(path) {
       }
     }
     p
+  }
+  path_realize <- function(path) {
+    path_tidy(as.character(lapply(path, path_realize_0)))
   }
 
   # We need to convert all paths to absolute paths, but _not_ to normalize
