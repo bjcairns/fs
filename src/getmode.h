@@ -1,12 +1,16 @@
 #pragma once
 
-#include <string>
+#define R_NO_REMAP
+#include <Rinternals.h>
+#undef R_NO_REMAP
 
-// [[Rcpp::export]]
-unsigned short getmode_(const char* mode_str, unsigned short mode);
+#include "utils.h"
 
-// [[Rcpp::export]]
-std::string strmode_(unsigned short mode);
+// [[export]]
+extern "C" SEXP fs_getmode_(SEXP mode_str_sxp, SEXP mode_sxp);
 
-// [[Rcpp::export]]
-std::string file_code_(std::string path, unsigned short mode);
+// [[export]]
+extern "C" SEXP fs_strmode_(SEXP mode_sxp);
+
+// [[export]]
+extern "C" SEXP fs_file_code_(SEXP path_sxp, SEXP mode_sxp);

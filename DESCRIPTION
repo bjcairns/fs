@@ -1,6 +1,6 @@
 Package: fs
 Title: Cross-Platform File System Operations Based on 'libuv'
-Version: 1.3.1.9000
+Version: 1.5.0.9000
 Authors@R: c(
     person("Jim", "Hester", email = "james.f.hester@gmail.com", role = c("aut", "cre")),
     person("Hadley", "Wickham", , "hadley@rstudio.com", "aut"),
@@ -16,14 +16,11 @@ License: GPL-3
 Encoding: UTF-8
 LazyData: true
 ByteCompile: true
-LinkingTo: 
-    Rcpp
 Imports:
-    methods,
-    Rcpp
+    methods
 SystemRequirements: GNU make
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 6.1.1
+RoxygenNote: 7.1.1
 URL: http://fs.r-lib.org, https://github.com/r-lib/fs
 BugReports: https://github.com/r-lib/fs/issues
 Copyright: file COPYRIGHTS
@@ -31,10 +28,12 @@ Suggests:
     testthat,
     covr,
     pillar (>= 1.0.0),
+    tibble (>= 1.1.0),
     crayon,
     rmarkdown,
     knitr,
     withr,
-    spelling
+    spelling,
+    vctrs (>= 0.3.0)
 VignetteBuilder: knitr
 Language: en-US

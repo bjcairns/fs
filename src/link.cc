@@ -2,14 +2,14 @@
 
 #undef ERROR
 
-#include "Rcpp.h"
+#include "Rinternals.h"
 #include "error.h"
 #include "utils.h"
 
-using namespace Rcpp;
+#include <cstring>
 
-// [[Rcpp::export]]
-void link_create_hard_(CharacterVector path, CharacterVector new_path) {
+// [[export]]
+extern "C" SEXP fs_link_create_hard_(SEXP path, SEXP new_path) {
   for (R_xlen_t i = 0; i < Rf_xlength(new_path); ++i) {
     uv_fs_t req;
     const char* p = CHAR(STRING_ELT(path, i));
@@ -18,10 +18,12 @@ void link_create_hard_(CharacterVector path, CharacterVector new_path) {
     stop_for_error2(req, "Failed to link '%s' to '%s'", p, n);
     uv_fs_req_cleanup(&req);
   }
+
+  return R_NilValue;
 }
 
-// [[Rcpp::export]]
-void link_create_symbolic_(CharacterVector path, CharacterVector new_path) {
+// [[export]]
+extern "C" SEXP fs_link_create_symbolic_(SEXP path, SEXP new_path) {
   for (R_xlen_t i = 0; i < Rf_xlength(new_path); ++i) {
     uv_fs_t req;
     const char* p = CHAR(STRING_ELT(path, i));
@@ -51,11 +53,13 @@ void link_create_symbolic_(CharacterVector path, CharacterVector new_path) {
     stop_for_error2(req, "Failed to link '%s' to '%s'", p, n);
     uv_fs_req_cleanup(&req);
   }
+
+  return R_NilValue;
 }
 
-// [[Rcpp::export]]
-CharacterVector readlink_(CharacterVector path) {
-  CharacterVector out(Rf_xlength(path));
+// [[export]]
+extern "C" SEXP fs_readlink_(SEXP path) {
+  SEXP out = PROTECT(Rf_allocVector(STRSXP, Rf_xlength(path)));
   Rf_setAttrib(out, R_NamesSymbol, path);
   for (R_xlen_t i = 0; i < Rf_xlength(path); ++i) {
     uv_fs_t req;
@@ -65,5 +69,7 @@ CharacterVector readlink_(CharacterVector path) {
     SET_STRING_ELT(out, i, Rf_mkCharCE((const char*)req.ptr, CE_UTF8));
     uv_fs_req_cleanup(&req);
   }
+
+  UNPROTECT(1);
   return out;
 }

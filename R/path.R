@@ -48,7 +48,8 @@ NULL
 #' from the current working directory.
 #'
 #' @param ... character vectors, if any values are NA, the result will also be
-#'   NA.
+#'   NA. The paths follow the recycling rules used in the tibble package,
+#'   namely that only length 1 arguments are recycled.
 #' @param ext An optional extension to append to the generated path.
 #' @export
 #' @seealso [path_home()], [path_package()] for functions to construct paths
@@ -58,7 +59,23 @@ NULL
 #'
 #' path("foo", letters[1:3], ext = "txt")
 path <- function(..., ext = "") {
-  path_tidy(path_(lapply(list(...), function(x) enc2utf8(as.character(x))), ext))
+  args <- list(...)
+  assert_recyclable(args)
+
+  path_tidy(.Call(fs_path_, lapply(args, function(x) enc2utf8(as.character(x))), ext))
+}
+
+assert_recyclable <- function(x) {
+  if (length(x) == 0) {
+    return()
+  }
+  len <- vapply(x, length, integer(1))
+  max_len <- max(len)
+  different <- which(len != 0 & len != max_len)
+  assert(
+    "Arguments must have consistent lengths, only values of length one are recycled.",
+    all(len[different] == 1)
+  )
 }
 
 #' @rdname path
@@ -75,26 +92,8 @@ path_real <- function(path) {
   path <- enc2utf8(path)
   old <- path_expand(path)
 
-  # We need to convert all paths to absolute paths, but _not_ to normalize
-  # them, so we cannot use `path_abs()`.
-  is_abs <- is_absolute_path(path)
-  old[!is_abs] <- path(getwd(), path[!is_abs])
-
   is_missing <- is.na(path)
-  exists <- file_exists(path) == TRUE
-
-  # Realize all paths which fully exist
-  old[!is_missing & exists] <- realize_(old[!is_missing & exists])
-
-  # Handle paths which only partially exist
-  realize_one <- function(splits) {
-    paths <- Reduce(fs::path, splits, accumulate = TRUE)
-    last_link <- which.max(is_link(paths))
-    path(realize_(paths[last_link]), path_join(splits[seq(last_link + 1, length(splits))]))
-  }
-
-  partial <- !is_missing & !exists
-  old[partial] <- vapply(path_split(old[partial]), realize_one, character(1))
+  old[!is_missing] <- .Call(fs_realize_, old[!is_missing])
 
   path_tidy(old)
 }
@@ -112,7 +111,7 @@ path_real <- function(path) {
 #' @export
 path_tidy <- function(path) {
   path <- as.character(path)
-  new_fs_path(tidy_(path))
+  new_fs_path(.Call(fs_tidy_, path))
 }
 
 
@@ -139,7 +138,7 @@ path_join <- function(parts) {
     return(path_tidy(""))
   }
   if (is.character(parts)) {
-    return(path_tidy(path_(enc2utf8(parts), "")))
+    return(path_tidy(.Call(fs_path_, as.list(enc2utf8(parts)), "")))
   }
   path_tidy(vapply(parts, path_join, character(1)))
 }
@@ -263,7 +262,7 @@ path_rel <- function(path, start = ".") {
 #' is also more compatible with external tools such as git and ssh, both of
 #' which put user-level files in `USERPROFILE` by default. It also allows you to
 #' write portable paths, such as `~/Desktop` that points to the Desktop location
-#' on Windows, MacOS and (most) Linux systems.
+#' on Windows, macOS and (most) Linux systems.
 #'
 #' Users can set the `R_FS_HOME` environment variable to override the
 #' definitions on any platform.
@@ -287,7 +286,7 @@ path_expand <- function(path) {
   path <- enc2utf8(path)
 
   # We use the windows implementation if R_FS_HOME is set or if on windows
-  path_tidy(expand_(path, Sys.getenv("R_FS_HOME") != "" || is_windows()))
+  path_tidy(.Call(fs_expand_, path, Sys.getenv("R_FS_HOME") != "" || is_windows()))
 }
 
 #' @rdname path_expand
@@ -296,7 +295,7 @@ path_expand_r <- function(path) {
   path <- enc2utf8(path)
 
   # Unconditionally use R_ExpandFileName
-  path_tidy(expand_(path, FALSE))
+  path_tidy(.Call(fs_expand_, path, FALSE))
 }
 
 #' @rdname path_expand
@@ -384,13 +383,24 @@ path_ext_remove <- function(path) {
 #' @rdname path_file
 #' @export
 path_ext_set <- function(path, ext) {
+
+  if (!(length(ext) == length(path) || length(ext) == 1)) {
+    assert_recyclable(list(path, ext))
+  }
+
   # Remove a leading . if present
   ext <- sub("[.]", "", ext)
 
   has_ext <- nzchar(ext)
   to_set <- !is.na(path) & has_ext
 
-  path[to_set] <- paste0(path_ext_remove(path[to_set]), ".", ext[to_set])
+  if (length(ext) == 1) {
+    ext <- rep(ext, sum(to_set))
+  }
+
+  path[to_set] <- paste0(
+    path_ext_remove(path[to_set]), ".", ext
+  )
 
   path_tidy(path)
 }
@@ -472,5 +482,19 @@ path_has_parent <- function(path, parent) {
   path <- path_abs(path)
   parent <- path_abs(parent)
 
-  identical(path_common(c(path, parent)), parent)
+  res <- logical(length(path))
+
+  assert_recyclable(list(path, parent))
+  if (length(path) == 1) {
+    path <- rep(path, length(parent))
+  }
+
+  if (length(parent) == 1) {
+    parent <- rep(parent, length(path))
+  }
+
+  for (i in seq_along(path)) {
+    res[[i]] <- identical(as.character(path_common(c(path[[i]], parent[[i]]))), as.character(parent[[i]]))
+  }
+  res
 }

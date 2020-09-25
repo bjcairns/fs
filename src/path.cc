@@ -2,16 +2,17 @@
 
 #undef ERROR
 
-#include "Rcpp.h"
+#include "Rinternals.h"
 #include "error.h"
 #include "utils.h"
 #include <libgen.h>
 
-using namespace Rcpp;
+#include <cstdlib>
+#include <cstring>
 
-// [[Rcpp::export]]
-CharacterVector realize_(CharacterVector path) {
-  CharacterVector out = CharacterVector(path.size());
+// [[export]]
+extern "C" SEXP fs_realize_(SEXP path) {
+  SEXP out = PROTECT(Rf_allocVector(STRSXP, Rf_xlength(path)));
 
   for (R_xlen_t i = 0; i < Rf_xlength(out); ++i) {
     uv_fs_t req;
@@ -21,10 +22,13 @@ CharacterVector realize_(CharacterVector path) {
     SET_STRING_ELT(out, i, Rf_mkChar((const char*)req.ptr));
     uv_fs_req_cleanup(&req);
   }
+
+  UNPROTECT(1);
   return out;
 }
-// [[Rcpp::export]]
-CharacterVector path_(List paths, const char* ext) {
+
+// [[export]]
+extern "C" SEXP fs_path_(SEXP paths, SEXP ext_sxp) {
   R_xlen_t max_row = 0;
   R_xlen_t max_col = Rf_xlength(paths);
   char buf[PATH_MAX];
@@ -32,13 +36,16 @@ CharacterVector path_(List paths, const char* ext) {
   for (R_xlen_t c = 0; c < max_col; ++c) {
     R_xlen_t len = Rf_xlength(VECTOR_ELT(paths, c));
     if (len == 0) {
-      return CharacterVector();
+      return Rf_allocVector(STRSXP, 0);
     }
     if (len > max_row) {
       max_row = len;
     }
   }
-  CharacterVector out(max_row);
+
+  const char* ext = CHAR(STRING_ELT(ext_sxp, 0));
+
+  SEXP out = PROTECT(Rf_allocVector(STRSXP, max_row));
   for (R_xlen_t r = 0; r < max_row; ++r) {
     bool has_na = false;
     b = buf;
@@ -53,9 +60,9 @@ CharacterVector path_(List paths, const char* ext) {
         int str_len = LENGTH(str);
         int new_len = b - buf + str_len;
         if (new_len > PATH_MAX) {
-          std::stringstream err;
-          err << "Total path length must be less than PATH_MAX: " << PATH_MAX;
-          throw Rcpp::exception(err.str().c_str(), false);
+          UNPROTECT(1);
+          Rf_error(
+              "Total path length must be less than PATH_MAX: %i", PATH_MAX);
         }
 
         const char* s = CHAR(str);
@@ -70,7 +77,7 @@ CharacterVector path_(List paths, const char* ext) {
       }
     }
     if (has_na) {
-      out[r] = NA_STRING;
+      SET_STRING_ELT(out, r, NA_STRING);
     } else {
       if (strlen(ext) > 0) {
         *b++ = '.';
@@ -78,9 +85,12 @@ CharacterVector path_(List paths, const char* ext) {
         b += strlen(ext) + 1;
       }
       *b = '\0';
-      out[r] = Rf_mkCharCE(buf, CE_UTF8);
+      SET_STRING_ELT(out, r, Rf_mkCharCE(buf, CE_UTF8));
     }
   }
+
+  UNPROTECT(1);
+
   return out;
 }
 
@@ -160,37 +170,50 @@ std::string expand_windows(const char* p) {
   return home;
 }
 
-// [[Rcpp::export]]
-CharacterVector expand_(CharacterVector path, bool windows) {
-  CharacterVector out = CharacterVector(path.size());
+// [[export]]
+extern "C" SEXP fs_expand_(SEXP path_sxp, SEXP windows_sxp) {
+
+  SEXP out = PROTECT(Rf_allocVector(STRSXP, Rf_xlength(path_sxp)));
+
+  bool windows = LOGICAL(windows_sxp)[0];
 
   for (R_xlen_t i = 0; i < Rf_xlength(out); ++i) {
-    if (STRING_ELT(path, i) == R_NaString) {
+    if (STRING_ELT(path_sxp, i) == R_NaString) {
       SET_STRING_ELT(out, i, R_NaString);
     } else {
-      const char* p = CHAR(STRING_ELT(path, i));
+      const char* p = CHAR(STRING_ELT(path_sxp, i));
       if (windows) {
+
+        BEGIN_CPP
         std::string res = expand_windows(p);
         SET_STRING_ELT(out, i, Rf_mkCharCE(res.c_str(), CE_UTF8));
+        END_CPP
       } else {
         SET_STRING_ELT(out, i, Rf_mkCharCE(R_ExpandFileName(p), CE_UTF8));
       }
     }
   }
+
+  UNPROTECT(1);
   return out;
 }
 
-// [[Rcpp::export]]
-CharacterVector tidy_(CharacterVector path) {
-  CharacterVector out = CharacterVector(path.size());
+// [[export]]
+extern "C" SEXP fs_tidy_(SEXP path) {
+  SEXP out = PROTECT(Rf_allocVector(STRSXP, Rf_xlength(path)));
 
   for (R_xlen_t i = 0; i < Rf_xlength(out); ++i) {
     if (STRING_ELT(path, i) == R_NaString) {
       SET_STRING_ELT(out, i, R_NaString);
     } else {
+
+      BEGIN_CPP
       std::string p = path_tidy_(CHAR(STRING_ELT(path, i)));
       SET_STRING_ELT(out, i, Rf_mkCharCE(p.c_str(), CE_UTF8));
+      END_CPP
     }
   }
+
+  UNPROTECT(1);
   return out;
 }

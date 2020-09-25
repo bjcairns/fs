@@ -1,4 +1,5 @@
 #include "getmode.h"
+#include "utils.h"
 
 #if (defined(__APPLE__) && defined(__MACH__)) || defined(__OpenBSD__) ||       \
     defined(__FreeBSD__) || defined(__NetBSD__)
@@ -9,11 +10,13 @@
 #include "bsd/unistd.h" /* for getmode / setmode */
 #endif
 
-#include <Rcpp.h> /* for Rf_error */
+#include <Rinternals.h> /* for Rf_error */
 
 #include <sys/stat.h>
 
-unsigned short getmode_(const char* mode_str, unsigned short mode) {
+#include <cstdlib>
+
+unsigned short getmode__(const char* mode_str, unsigned short mode) {
   void* out = setmode(mode_str);
   if (out == NULL) {
     // TODO: use stop_for_error here
@@ -24,7 +27,7 @@ unsigned short getmode_(const char* mode_str, unsigned short mode) {
   return res;
 }
 
-std::string strmode_(unsigned short mode) {
+std::string strmode__(unsigned short mode) {
   char out[12];
   strmode(mode, out);
 
@@ -35,7 +38,7 @@ std::string strmode_(unsigned short mode) {
   return out + 1;
 }
 
-std::string file_code_(std::string path, unsigned short mode) {
+std::string file_code__(const std::string& path, unsigned short mode) {
   switch (mode & S_IFMT) {
   case S_IFDIR:
     if (mode & S_IWOTH)

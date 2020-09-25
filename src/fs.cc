@@ -1,4 +1,8 @@
+#include "Rinternals.h"
 #include "uv.h"
 
-//[[Rcpp::export]]
-void cleanup_() { uv_loop_close(uv_default_loop()); }
+//[[export]]
+extern "C" SEXP fs_cleanup_() {
+  uv_loop_close(uv_default_loop());
+  return R_NilValue;
+}

@@ -1,10 +1,10 @@
 #include "getmode.h"
 #include <sys/stat.h>
 
-#include <Rcpp.h> /* for Rf_error */
+#include <Rinternals.h> /* for Rf_error */
 
 /* code adapted from https://cgit.freedesktop.org/libbsd/tree/src/setmode.c */
-unsigned short getmode_(const char* mode_str, unsigned short mode) {
+unsigned short getmode__(const char* mode_str, unsigned short mode) {
   const char* p = mode_str;
   char* ep;
   char op;
@@ -163,20 +163,22 @@ void strmode(mode_t mode, char* p) {
   *p = '\0';
 }
 
-std::string strmode_(mode_t mode) {
-  char out[4];
+std::string strmode__(mode_t mode) {
+  char out[5];
   strmode(mode, out);
+  out[4] = '\0';
 
   // The first character is the file type, so we do not return it.
   return out + 1;
 }
-#define S_IFLNK 0120000
 
-std::string file_code_(std::string path, mode_t mode) {
+#define WIN_S_IFLNK 0120000
+
+std::string file_code__(const std::string& path, unsigned short mode) {
   switch (mode & S_IFMT) {
   case S_IFDIR:
     return "di";
-  case S_IFLNK:
+  case WIN_S_IFLNK:
     return "ln";
   case S_IFIFO:
     return "pi";

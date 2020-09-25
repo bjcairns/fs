@@ -68,6 +68,11 @@ as_fs_perms <- function(x, ...) {
 }
 
 #' @export
+as_fs_perms.NULL <- function(x, ...) {
+  new_fs_perms(integer())
+}
+
+#' @export
 #' @rdname fs_perms
 fs_perms <- as_fs_perms
 
@@ -80,15 +85,20 @@ print.fs_perms <- function(x, ...) {
 
 #' @export
 format.fs_perms <- function(x, ...) {
-  vapply(x, strmode_, character(1))
+  vapply(x, function(x) .Call(fs_strmode_, x), character(1))
 }
 
 #' @export
 as.character.fs_perms <- format.fs_perms
 
 #' @export
-`[.fs_perms` <- function(x, i) {
+`[.fs_perms` <- function(x, i, ...) {
   new_fs_perms(NextMethod("["))
+}
+
+#' @export
+`[[.fs_perms` <- function(x, i, ...) {
+  new_fs_perms(NextMethod("[["))
 }
 
 #' @export
@@ -123,9 +133,9 @@ as_fs_perms.character <- function(x, ..., mode = 0) {
   out <- integer(n)
   for (i in seq_len(n)) {
     out[[i]] <- as.integer(
-      getmode_(
+      .Call(fs_getmode_,
         res[[((i + 1) %% length(res)) + 1L]],
-        mode[[((i + 1) %% length(mode)) + 1L]]))
+        as.integer(mode[[((i + 1) %% length(mode)) + 1L]])))
   }
   new_fs_perms(out)
 }
@@ -190,4 +200,55 @@ pillar_shaft.fs_perms <- function(x, ...) {
 
 type_sum.fs_perms <- function(x) {
   "fs::perms"
+}
+
+# All functions below registered in .onLoad
+
+vec_ptype2.fs_perms.fs_perms <- function(x, y, ...) {
+  x
+}
+vec_ptype2.fs_perms.double <- function(x, y, ...) {
+  x
+}
+vec_ptype2.double.fs_perms <- function(x, y, ...) {
+  y
+}
+
+# Note order of class is the opposite as for ptype2
+vec_cast.fs_perms.fs_perms <- function(x, to, ...) {
+  x
+}
+vec_cast.fs_perms.double <- function(x, to, ...) {
+  as_fs_perms(x)
+}
+vec_cast.double.fs_perms <- function(x, to, ...) {
+  unclass(x)
+}
+
+vec_ptype2.fs_perms.integer <- function(x, y, ...) {
+  x
+}
+vec_ptype2.integer.fs_perms <- function(x, y, ...) {
+  y
+}
+
+vec_cast.fs_perms.integer <- function(x, to, ...) {
+  as_fs_perms(x)
+}
+vec_cast.integer.fs_perms <- function(x, to, ...) {
+  unclass(x)
+}
+
+vec_ptype2.fs_perms.character <- function(x, y, ...) {
+  x
+}
+vec_ptype2.character.fs_perms <- function(x, y, ...) {
+  y
+}
+
+vec_cast.fs_perms.character <- function(x, to, ...) {
+  as_fs_perms(x)
+}
+vec_cast.character.fs_perms <- function(x, to, ...) {
+  as.character(x)
 }

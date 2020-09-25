@@ -31,6 +31,20 @@ describe("file_info", {
       expect_equal(as.character(x$path), NA_character_)
       expect_equal(sum(is.na(x)), 18)
     })
+    it("can be subset as a data.frame", {
+      x <- file_info("foo/bar")
+      class(x) <- "data.frame"
+      for (col in seq_along(x)) {
+        expect_true(length(x[[1, col]]) == 1)
+      }
+    })
+    it("can be subset as a tibble", {
+      x <- file_info("foo/bar")
+      expect_is(x, "tbl_df")
+      for (col in seq_along(x)) {
+        expect_true(length(x[[1, col]]) == 1)
+      }
+    })
   })
 })
 
@@ -41,6 +55,10 @@ describe("file_size", {
       it("returns the correct file size", {
         expect_equal(file_size("foo"), stats::setNames(file_info("foo")$size, "foo"))
         expect_equal(file_size("bar"), stats::setNames(file_info("bar")$size, "bar"))
+      })
+      it("returns an object of class fs_bytes, numeric (#239)", {
+        expect_equal(class(file_size("foo")), c("fs_bytes", "numeric"))
+        expect_equal(class(file_size("foo")[]), c("fs_bytes", "numeric"))
       })
   })
 })
@@ -118,7 +136,7 @@ describe("file_chown", {
 
       # Change ownership to root
       expect_equal(file_chown("foo/bar", user_id = 0), "foo/bar")
-      expect_true(file_info("foo/bar")$user_id == 0)
+      expect_true(file_info("foo/bar")$user == "root")
     })
     it("errors on missing input", {
       expect_error(file_chown(NA, user_id = 0), class = "invalid_argument")

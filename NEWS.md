@@ -1,20 +1,69 @@
 # fs (development version)
 
-* Fix compilation issues on alpine linux (#210)
+* You can now disable use of tibbles by setting `options(fs.use_tibble = FALSE)` (#295).
 
-* fs now passes along CPPFLAGS during compilation of libuv, fixing an issue that could
+* `dir_create()` now restores the previous umask (#293)
+
+# fs 1.5.0
+
+* The libuv release used by fs was updated to 1.38.1
+
+* `dir_create()` now consults the process umask so the mode during directory creation works like `mkdir` does (#284).
+
+* `fs_path`, `fs_bytes` and `fs_perms` objects are now compatible with vctrs 0.3.0 (#266)
+
+* `fs_path` objects now sort properly when there is a mix of ASCII and unicode elements (#279)
+
+
+# fs 1.4.2
+
+* `file_info(..., follow = TRUE)`, `is_dir()`, and `is_file()`
+  follow relative symlinks in non-current directories (@heavywatal, #280)
+
+* `dir_map()` now grows its internal list safely, the 1.4.0 release introduced an unsafe regression (#268)
+
+* `file_info()` returns a tibble if the tibble package is installed, and subsets work when it is a `data.frame` (#265)
+
+* `path_real()` always fails if the file does not exist. Thus it can no longer
+be used to resolve symlinks further up the path hierarchy for files that do not
+yet exist. This reverts the feature introduced in 1.2.7 (#144, #221, #231)
+
+# fs 1.4.1
+
+* Fix compilation on Solaris.
+
+# fs 1.4.0
+
+* `[[.fs_path`, `[[.fs_bytes` and `[[.fs_perms` now preserve their classes after subsetting (#254).
+
+* `path_has_parent()` now recycles both the `path` and `parent` arguments (#253).
+
+* `path_ext_set()` now recycles both the `path` and `ext` arguments (#250).
+
+* Internally fs no longer depends on Rcpp
+
+# fs 1.3.2
+
+* fs now passes along `CPPFLAGS` during compilation of libuv, fixing an issue that could
   prevent compilation from source on macOS Catalina. (@kevinushey, #229)
-  
-* `path()` now errors if the path given or constructed will exceed `PATH_MAX` (#233).
 
-* `dir_tree()` now works with paths that need tilde expansion (@dmurdoch, @jennybc, #203).
-* `is_dir()`, `is_file()`, `is_file_empty()` and `file_info()` gain a `follow`
-  argument, to follow links and return information about the linked file rather
-  than the link itself (#198)
+* fs now compiles on alpine linux (#210)
 
 * `dir_create()` now works with absolute paths and `recurse = FALSE` (#204).
 
-* fail=FALSE extended to get_dirent_type (@bellma-lilly, #219)
+* `dir_tree()` now works with paths that need tilde expansion (@dmurdoch, @jennybc, #203).
+
+* `file_info()` now returns file sizes with the proper classes ("fs_bytes" and "numeric"), rather than just "fs_bytes" (#239)
+
+* `get_dirent_type()` gains a `fail` argument (@bellma-lilly, #219)
+
+* `is_dir()`, `is_file()`, `is_file_empty()` and `file_info()` gain a `follow` argument, to follow links and return information about the linked file rather than the link itself (#198)
+
+* `path()` now follows "tidy" recycling rules, namely only consistent or length 1 inputs are recycled. (#238)
+
+* `path()` now errors if the path given or constructed will exceed `PATH_MAX` (#233).
+
+* `path_ext_set()` now works with multiple paths (@maurolepore, #208).
 
 # fs 1.3.1
 

@@ -45,7 +45,7 @@
 file_info <- function(path, fail = TRUE, follow = FALSE) {
   old <- path_expand(path)
 
-  res <- stat_(old, fail)
+  res <- .Call(fs_stat_, old, fail)
 
   res$path <- path_tidy(path)
 
@@ -62,11 +62,14 @@ file_info <- function(path, fail = TRUE, follow = FALSE) {
 
   is_symlink <- !is.na(res$type) & res$type == "symlink"
   while(follow && any(is_symlink)) {
-    res[is_symlink, ] <- file_info(link_path(path[is_symlink]), fail = fail, follow = FALSE)
+    lpath <- link_path(path[is_symlink])
+    lpath <- ifelse(is_absolute_path(lpath), lpath, path(path_dir(path[is_symlink]), lpath))
+    res[is_symlink, ] <- file_info(lpath, fail = fail, follow = FALSE)
     is_symlink <- !is.na(res$type) & res$type == "symlink"
   }
 
   res
+  as_tibble(res)
 }
 
 #' @export
@@ -124,7 +127,7 @@ file_chmod <- function(path, mode) {
 
   old <- path_expand(path)
 
-  chmod_(old, mode)
+  .Call(fs_chmod_, old, as.integer(mode))
 
   invisible(path_tidy(path))
 }
@@ -150,14 +153,14 @@ file_chown <- function(path, user_id = NULL, group_id = NULL) {
   }
 
   if (is.character(user_id)) {
-    user_id <- getpwnam_(user_id)
+    user_id <- .Call(fs_getpwnam_, user_id)
   }
 
   if (is.character(group_id)) {
-    group_id <- getgrnam_(group_id)
+    group_id <- .Call(fs_getgrnam_, group_id)
   }
 
-  chown_(old, user_id, group_id)
+  .Call(fs_chown_, old, as.integer(user_id), as.integer(group_id))
 
   invisible(path_tidy(path))
 }
@@ -217,7 +220,7 @@ file_move <- function(path, new_path) {
 
   new[is_directory] <- path(new[is_directory], basename(old))
 
-  move_(old, new)
+  .Call(fs_move_, old, new)
 
   invisible(path_tidy(new))
 }
@@ -246,8 +249,8 @@ file_touch <- function(path, access_time = Sys.time(), modification_time = acces
 
   path <- path_expand(path)
 
-  create_(path, 420)
-  touch_(path, access_time, modification_time)
+  .Call(fs_create_, path, 420L)
+  .Call(fs_touch_, path, access_time, modification_time)
 
   invisible(path_tidy(path))
 }
