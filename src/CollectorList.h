@@ -1,30 +1,25 @@
-#include <Rinternals.h>
+#include <Rcpp.h>
+
+using Rcpp::List;
 
 class CollectorList {
-  SEXP data_;
+  List data_;
   R_xlen_t n_;
 
 public:
-  CollectorList(R_xlen_t size = 1) : n_(0) {
-    data_ = Rf_allocVector(VECSXP, size);
-    R_PreserveObject(data_);
-  }
+  CollectorList(R_xlen_t size = 1) : data_(size), n_(0) {}
 
   void push_back(SEXP x) {
     if (Rf_xlength(data_) == n_) {
-      R_ReleaseObject(data_);
       data_ = Rf_lengthgets(data_, n_ * 2);
-      R_PreserveObject(data_);
     }
     SET_VECTOR_ELT(data_, n_++, x);
   }
 
-  operator SEXP() {
+  List vector() {
     if (Rf_xlength(data_) != n_) {
-      SETLENGTH(data_, n_);
+      data_ = Rf_xlengthgets(data_, n_);
     }
     return data_;
   }
-
-  ~CollectorList() { R_ReleaseObject(data_); }
 };

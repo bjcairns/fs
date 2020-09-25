@@ -27,13 +27,14 @@ file_access <- function(path, mode = "exists") {
   old <- path_expand(path)
   mode <- sum(access_types[mode])
 
-  .Call(fs_access_, unclass(old), as.integer(mode))
+  access_(unclass(old), mode)
 }
 
 #' @rdname file_access
 #' @export
 file_exists <- function(path) {
-  .Call(fs_exists_, path)
+  res <- file_info(path)
+  setNames(!is.na(res$type), res$path)
 }
 
 #' @rdname file_access

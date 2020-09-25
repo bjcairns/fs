@@ -4,23 +4,20 @@
 #undef ERROR
 
 #include "CollectorList.h"
-#include "Rinternals.h"
+#include "Rcpp.h"
 #include "error.h"
 #include "utils.h"
-#include <cstring>
-#include <limits>
-#include <sys/stat.h>
 
-// [[export]]
-extern "C" SEXP fs_mkdir_(SEXP path, SEXP mode_sxp) {
-  mode_t m = INTEGER(mode_sxp)[0];
+using namespace Rcpp;
 
+// [[Rcpp::export]]
+void mkdir_(CharacterVector path, unsigned short mode) {
   R_xlen_t n = Rf_xlength(path);
   for (R_xlen_t i = 0; i < n; ++i) {
     uv_fs_t req;
     const char* p = CHAR(STRING_ELT(path, i));
 
-    int fd = uv_fs_mkdir(uv_default_loop(), &req, p, 0x777, NULL);
+    int fd = uv_fs_mkdir(uv_default_loop(), &req, p, mode, NULL);
 
     if (fd == UV_EEXIST) {
       // Fail silently if the directory already exists
@@ -40,18 +37,11 @@ extern "C" SEXP fs_mkdir_(SEXP path, SEXP mode_sxp) {
     }
 
     stop_for_error(req, "Failed to make directory '%s'", p);
-
-    uv_fs_t chmod_req;
-    uv_fs_chmod(uv_default_loop(), &chmod_req, p, m, NULL);
-    stop_for_error(
-        chmod_req, "Failed to set permissions for directory '%s'", p);
   }
-
-  return R_NilValue;
 }
 
-// [[export]]
-extern "C" SEXP fs_rmdir_(SEXP path) {
+// [[Rcpp::export]]
+void rmdir_(CharacterVector path) {
   for (R_xlen_t i = 0; i < Rf_xlength(path); ++i) {
     uv_fs_t req;
     const char* p = CHAR(STRING_ELT(path, i));
@@ -60,20 +50,16 @@ extern "C" SEXP fs_rmdir_(SEXP path) {
 
     uv_fs_req_cleanup(&req);
   }
-
-  return R_NilValue;
 }
 
 void dir_map(
-    SEXP fun,
+    Function fun,
     const char* path,
     bool all,
     int file_type,
     int recurse,
     CollectorList* value,
     bool fail) {
-
-  BEGIN_CPP
 
   if (recurse < 0) {
     recurse = std::numeric_limits<int>::max();
@@ -107,12 +93,9 @@ void dir_map(
     } else {
       name = std::string(path) + '/' + e.name;
     }
-    uv_dirent_type_t entry_type = get_dirent_type(name.c_str(), e.type, fail);
+    uv_dirent_type_t entry_type = get_dirent_type(name.c_str(), e.type,fail);
     if (file_type == -1 || (((1 << (entry_type)) & file_type) > 0)) {
-      SEXP call = PROTECT(Rf_lang2(fun, Rf_mkString(name.c_str())));
-      SEXP res = PROTECT(Rf_eval(call, R_GlobalEnv));
-      value->push_back(res);
-      UNPROTECT(2);
+      value->push_back(fun(asCharacterVector(name)));
     }
 
     if (recurse > 0 && entry_type == UV_DIRENT_DIR) {
@@ -127,30 +110,22 @@ void dir_map(
     }
   }
   uv_fs_req_cleanup(&req);
-
-  END_CPP
 }
 
-// [[export]]
-extern "C" SEXP fs_dir_map_(
-    SEXP path_sxp,
-    SEXP fun_sxp,
-    SEXP all_sxp,
-    SEXP type_sxp,
-    SEXP recurse_sxp,
-    SEXP fail_sxp) {
+// [[Rcpp::export]]
+List dir_map_(
+    CharacterVector path,
+    Function fun,
+    bool all,
+    IntegerVector type,
+    int recurse,
+    bool fail) {
+  int file_type = INTEGER(type)[0];
 
   CollectorList out;
-  for (R_xlen_t i = 0; i < Rf_xlength(path_sxp); ++i) {
-    const char* p = CHAR(STRING_ELT(path_sxp, i));
-    dir_map(
-        fun_sxp,
-        p,
-        LOGICAL(all_sxp)[0],
-        INTEGER(type_sxp)[0],
-        INTEGER(recurse_sxp)[0],
-        &out,
-        LOGICAL(fail_sxp)[0]);
+  for (R_xlen_t i = 0; i < Rf_xlength(path); ++i) {
+    const char* p = CHAR(STRING_ELT(path, i));
+    dir_map(fun, p, all, file_type, recurse, &out, fail);
   }
-  return out;
+  return out.vector();
 }

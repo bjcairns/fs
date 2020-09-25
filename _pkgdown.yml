@@ -7,10 +7,6 @@ authors:
 development:
   mode: auto
 
-template:
-  params:
-    ganalytics: UA-115082821-1
-
 reference:
 - title: File manipulation
   contents:
@@ -35,9 +31,3 @@ reference:
   - as_fs_path
   - as_fs_bytes
   - as_fs_perms
-
-
-news:
-  releases:
-    - text: "Version 1.0.0"
-      href: https://www.tidyverse.org/blog/2018/01/fs-1.0.0/

@@ -15,7 +15,7 @@
 #' # list first 6 users
 #' head(user_ids())
 group_ids <- function() {
-  res <- .Call(fs_groups_)
+  res <- groups_()
   res <- unique(res[order(res$group_id), ])
   row.names(res) <- NULL
   res
@@ -25,7 +25,7 @@ group_ids <- function() {
 #' @rdname id
 #' @export
 user_ids <- function() {
-  res <- .Call(fs_users_)
+  res <- users_()
   res <- unique(res[order(res$user_id), ])
   row.names(res) <- NULL
   res

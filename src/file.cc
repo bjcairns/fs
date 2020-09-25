@@ -2,16 +2,12 @@
 #define __STDC_FORMAT_MACROS 1
 #endif
 
-#include <Rinternals.h>
-
 #include "getmode.h"
 #include "uv.h"
 
 #undef ERROR
 
-#include <string>
-#include <vector>
-
+#include "Rcpp.h"
 #include "error.h"
 
 #ifndef __WIN32
@@ -21,8 +17,10 @@
 
 #include <inttypes.h>
 
-// [[export]]
-extern "C" SEXP fs_move_(SEXP path, SEXP new_path) {
+using namespace Rcpp;
+
+// [[Rcpp::export]]
+void move_(CharacterVector path, CharacterVector new_path) {
   for (R_xlen_t i = 0; i < Rf_xlength(new_path); ++i) {
     uv_fs_t req;
     const char* p = CHAR(STRING_ELT(path, i));
@@ -47,18 +45,13 @@ extern "C" SEXP fs_move_(SEXP path, SEXP new_path) {
     stop_for_error2(req, "Failed to move '%s'to '%s'", p, n);
     uv_fs_req_cleanup(&req);
   }
-
-  return R_NilValue;
 }
 
-// [[export]]
-extern "C" SEXP fs_create_(SEXP path_sxp, SEXP mode_sxp) {
-
-  unsigned short mode = INTEGER(mode_sxp)[0];
-
-  for (R_xlen_t i = 0; i < Rf_xlength(path_sxp); ++i) {
+// [[Rcpp::export]]
+void create_(CharacterVector path, unsigned short mode) {
+  for (R_xlen_t i = 0; i < Rf_xlength(path); ++i) {
     uv_fs_t req;
-    const char* p = CHAR(STRING_ELT(path_sxp, i));
+    const char* p = CHAR(STRING_ELT(path, i));
     int fd = uv_fs_open(
         uv_default_loop(), &req, p, UV_FS_O_CREAT | UV_FS_O_WRONLY, mode, NULL);
     stop_for_error(req, "Failed to open '%s'", p);
@@ -68,13 +61,10 @@ extern "C" SEXP fs_create_(SEXP path_sxp, SEXP mode_sxp) {
 
     uv_fs_req_cleanup(&req);
   }
-
-  return R_NilValue;
 }
 
-// [[export]]
-extern "C" SEXP fs_stat_(SEXP path, SEXP fail_sxp) {
-  bool fail = LOGICAL(fail_sxp)[0];
+// [[Rcpp::export]]
+List stat_(CharacterVector path, bool fail) {
   // typedef struct {
   //  uint64_t st_dev;
   //  uint64_t st_mode;
@@ -95,8 +85,8 @@ extern "C" SEXP fs_stat_(SEXP path, SEXP fail_sxp) {
 
   R_xlen_t n = Rf_xlength(path);
 
-  SEXP out = PROTECT(Rf_allocVector(VECSXP, 18));
-  SEXP names = PROTECT(Rf_allocVector(STRSXP, 18));
+  List out = List(18);
+  CharacterVector names = CharacterVector(18);
 
   SET_STRING_ELT(names, 0, Rf_mkChar("path"));
   SET_VECTOR_ELT(out, 0, Rf_duplicate(path));
@@ -128,12 +118,7 @@ extern "C" SEXP fs_stat_(SEXP path, SEXP fail_sxp) {
 
   SET_STRING_ELT(names, 9, Rf_mkChar("size"));
   SET_VECTOR_ELT(out, 9, Rf_allocVector(REALSXP, n));
-
-  SEXP class_sxp = PROTECT(Rf_allocVector(STRSXP, 2));
-  SET_STRING_ELT(class_sxp, 0, Rf_mkChar("fs_bytes"));
-  SET_STRING_ELT(class_sxp, 1, Rf_mkChar("numeric"));
-  Rf_classgets(VECTOR_ELT(out, 9), class_sxp);
-  UNPROTECT(1);
+  Rf_classgets(VECTOR_ELT(out, 9), Rf_mkString("fs_bytes"));
 
   SET_STRING_ELT(names, 10, Rf_mkChar("block_size"));
   SET_VECTOR_ELT(out, 10, Rf_allocVector(REALSXP, n));
@@ -275,73 +260,42 @@ extern "C" SEXP fs_stat_(SEXP path, SEXP fail_sxp) {
     [i] = (st.st_birthtim.tv_sec + 1e-9 * st.st_birthtim.tv_nsec);
     uv_fs_req_cleanup(&req);
   }
-  Rf_setAttrib(out, R_NamesSymbol, names);
-  Rf_setAttrib(out, R_ClassSymbol, Rf_mkString("data.frame"));
+  out.attr("names") = names;
+  out.attr("class") = CharacterVector::create("tbl", "tbl_df", "data.frame");
+  out.attr("row.names") = IntegerVector::create(NA_INTEGER, -i);
 
-  SEXP row_names = PROTECT(Rf_allocVector(INTSXP, 2));
-  INTEGER(row_names)[0] = NA_INTEGER;
-  INTEGER(row_names)[1] = -i;
-  Rf_setAttrib(out, R_RowNamesSymbol, row_names);
-  UNPROTECT(1);
-
-  UNPROTECT(2);
   return out;
 }
 
-// [[export]]
-extern "C" SEXP fs_exists_(SEXP path_sxp) {
+// [[Rcpp::export]]
+LogicalVector access_(CharacterVector path, int mode) {
+  LogicalVector out = LogicalVector(Rf_xlength(path));
+  Rf_setAttrib(out, R_NamesSymbol, Rf_duplicate(path));
 
-  SEXP out = PROTECT(Rf_allocVector(LGLSXP, Rf_xlength(path_sxp)));
-  Rf_setAttrib(out, R_NamesSymbol, Rf_duplicate(path_sxp));
-
-  for (R_xlen_t i = 0; i < Rf_xlength(path_sxp); ++i) {
+  for (R_xlen_t i = 0; i < Rf_xlength(path); ++i) {
     uv_fs_t req;
-    const char* p = CHAR(STRING_ELT(path_sxp, i));
-    int res = uv_fs_stat(uv_default_loop(), &req, p, NULL);
-    LOGICAL(out)[i] = res == 0;
-    uv_fs_req_cleanup(&req);
-  }
-
-  UNPROTECT(1);
-  return out;
-}
-
-// [[export]]
-extern "C" SEXP fs_access_(SEXP path_sxp, SEXP mode_sxp) {
-
-  int mode = INTEGER(mode_sxp)[0];
-
-  SEXP out = PROTECT(Rf_allocVector(LGLSXP, Rf_xlength(path_sxp)));
-  Rf_setAttrib(out, R_NamesSymbol, Rf_duplicate(path_sxp));
-
-  for (R_xlen_t i = 0; i < Rf_xlength(path_sxp); ++i) {
-    uv_fs_t req;
-    const char* p = CHAR(STRING_ELT(path_sxp, i));
+    const char* p = CHAR(STRING_ELT(path, i));
     int res = uv_fs_access(uv_default_loop(), &req, p, mode, NULL);
     LOGICAL(out)[i] = res == 0;
     uv_fs_req_cleanup(&req);
   }
-
-  UNPROTECT(1);
   return out;
 }
 
-// [[export]]
-extern "C" SEXP fs_chmod_(SEXP path_sxp, SEXP mode_sxp) {
-  for (R_xlen_t i = 0; i < Rf_xlength(path_sxp); ++i) {
+// [[Rcpp::export]]
+void chmod_(CharacterVector path, IntegerVector mode) {
+  for (R_xlen_t i = 0; i < Rf_xlength(path); ++i) {
     uv_fs_t req;
-    const char* p = CHAR(STRING_ELT(path_sxp, i));
-    mode_t m = INTEGER(mode_sxp)[i];
+    const char* p = CHAR(STRING_ELT(path, i));
+    mode_t m = INTEGER(mode)[i];
     uv_fs_chmod(uv_default_loop(), &req, p, m, NULL);
     stop_for_error(req, "Failed to chmod '%s'", p);
     uv_fs_req_cleanup(&req);
   }
-
-  return R_NilValue;
 }
 
-// [[export]]
-extern "C" SEXP fs_unlink_(SEXP path) {
+// [[Rcpp::export]]
+void unlink_(CharacterVector path) {
   for (R_xlen_t i = 0; i < Rf_xlength(path); ++i) {
     uv_fs_t req;
     const char* p = CHAR(STRING_ELT(path, i));
@@ -349,20 +303,14 @@ extern "C" SEXP fs_unlink_(SEXP path) {
     stop_for_error(req, "Failed to remove '%s'", p);
     uv_fs_req_cleanup(&req);
   }
-
-  return R_NilValue;
 }
 
-// [[export]]
-extern "C" SEXP
-fs_copyfile_(SEXP path_sxp, SEXP new_path_sxp, SEXP overwrite_sxp) {
-
-  bool overwrite = LOGICAL(overwrite_sxp)[0];
-
-  for (R_xlen_t i = 0; i < Rf_xlength(path_sxp); ++i) {
+// [[Rcpp::export]]
+void copyfile_(CharacterVector path, CharacterVector new_path, bool overwrite) {
+  for (R_xlen_t i = 0; i < Rf_xlength(path); ++i) {
     uv_fs_t req;
-    const char* p = CHAR(STRING_ELT(path_sxp, i));
-    const char* n = CHAR(STRING_ELT(new_path_sxp, i));
+    const char* p = CHAR(STRING_ELT(path, i));
+    const char* n = CHAR(STRING_ELT(new_path, i));
     uv_fs_copyfile(
         uv_default_loop(),
         &req,
@@ -373,32 +321,21 @@ fs_copyfile_(SEXP path_sxp, SEXP new_path_sxp, SEXP overwrite_sxp) {
     stop_for_error2(req, "Failed to copy '%s' to '%s'", p, n);
     uv_fs_req_cleanup(&req);
   }
-
-  return R_NilValue;
 }
 
-// [[export]]
-extern "C" SEXP fs_chown_(SEXP path_sxp, SEXP uid_sxp, SEXP gid_sxp) {
-  int uid = INTEGER(uid_sxp)[0];
-  int gid = INTEGER(gid_sxp)[0];
-
-  for (R_xlen_t i = 0; i < Rf_xlength(path_sxp); ++i) {
+// [[Rcpp::export]]
+void chown_(CharacterVector path, int uid, int gid) {
+  for (R_xlen_t i = 0; i < Rf_xlength(path); ++i) {
     uv_fs_t req;
-    const char* p = CHAR(STRING_ELT(path_sxp, i));
+    const char* p = CHAR(STRING_ELT(path, i));
     uv_fs_chown(uv_default_loop(), &req, p, uid, gid, NULL);
     stop_for_error(req, "Failed to chown '%s'", p);
     uv_fs_req_cleanup(&req);
   }
-
-  return R_NilValue;
 }
 
-// [[export]]
-extern "C" SEXP fs_touch_(SEXP path, SEXP atime_sxp, SEXP mtime_sxp) {
-
-  double atime = REAL(atime_sxp)[0];
-  double mtime = REAL(mtime_sxp)[0];
-
+// [[Rcpp::export]]
+void touch_(CharacterVector path, double atime, double mtime) {
   for (R_xlen_t i = 0; i < Rf_xlength(path); ++i) {
     uv_fs_t req;
     const char* p = CHAR(STRING_ELT(path, i));
@@ -406,6 +343,4 @@ extern "C" SEXP fs_touch_(SEXP path, SEXP atime_sxp, SEXP mtime_sxp) {
     stop_for_error(req, "Failed to touch '%s'", p);
     uv_fs_req_cleanup(&req);
   }
-
-  return R_NilValue;
 }

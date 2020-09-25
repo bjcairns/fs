@@ -3,7 +3,7 @@
 #' @description
 #' `dir_ls()` is equivalent to the `ls` command. It returns filenames as a
 #' named `fs_path` character vector. The names are equivalent to the values,
-#' which is useful for passing onto functions like `purrr::map_dfr()`.
+#' which is useful for passing onto functions like [purrr::map_dfr()].
 #'
 #' `dir_info()` is equivalent to `ls -l` and a shortcut for
 #' `file_info(dir_ls())`.
@@ -89,7 +89,7 @@ dir_map <- function(path = ".", fun, all = FALSE, recurse = FALSE, type =
 
   old <- path_expand(path)
 
-  .Call(fs_dir_map_, old, fun, all, sum(directory_entry_types[type]), as.integer(recurse), fail)
+  dir_map_(old, fun, all, sum(directory_entry_types[type]), recurse, fail)
 }
 
 #' @rdname dir_ls

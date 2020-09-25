@@ -2,6 +2,14 @@
 ^help$
 ^Meta$
 ^\.travis\.yml$
+^src/libuv/\.github$
+^src/libuv/\.mailmap$
+^src/libuv/m4/lt~obsolete\.m4$
+^src/libuv/docs$
+^src/libuv/img$
+^src/libuv/samples$
+^src/libuv/test$
+^src/libuv/tools$
 ^LICENSE\.md$
 ^man-roxygen$
 ^.*\.Rproj$
@@ -20,6 +28,3 @@
 ^CRAN-RELEASE$
 ^revdep$
 ^.*\.tar\.gz$
-^\.github$
-^Makefile$
-^src/README\.md$

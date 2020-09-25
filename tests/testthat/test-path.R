@@ -42,18 +42,9 @@ describe("path", {
   })
 
   it("errors on paths which are too long", {
-    expect_error(path(paste(rep("a", 100000), collapse = "")), "less than PATH_MAX")
+    expect_error(fs::path(paste(rep("a", 100000), collapse = "")), "less than PATH_MAX")
 
-    expect_error(do.call(path, as.list(rep("a", 100000))), "less than PATH_MAX")
-  })
-
-  it("follows recycling rules", {
-    expect_equal(path("foo", character()), character())
-    expect_equal(path("foo", "bar"), "foo/bar")
-    expect_equal(path("foo", c("bar", "baz")), c("foo/bar", "foo/baz"))
-    expect_equal(path(c("foo", "qux"), c("bar", "baz")), c("foo/bar", "qux/baz"))
-
-    expect_error(path(c("foo", "qux", "foo2"), c("bar", "baz")), "Arguments must have consistent lengths", class = "invalid_argument")
+    expect_error(do.call(fs::path, as.list(rep("a", 100000))), "less than PATH_MAX")
   })
 })
 
@@ -71,6 +62,16 @@ describe("path_real", {
     with_dir_tree(list("foo/bar" = "test"), {
       link_create(path_real("foo"), "foo2")
       expect_equal(path_real("foo2"), path_real("foo"))
+    })
+  })
+
+  it("returns the real path for symbolic links even if the full path doesn't exist", {
+    with_dir_tree(list("foo/bar/baz" = "test"), {
+      link_create(path_real("foo"), "foo2")
+      expect_equal(path_real("foo/qux"), path_real("foo/qux"))
+
+      link_create(path_real("foo/bar"), "bar2")
+      expect_equal(path_real("bar2/qux"), path_real("bar2/qux"))
     })
   })
 
@@ -97,9 +98,7 @@ describe("path_real", {
       wd <- path_wd()
       link_create("y", "k")
       withr::with_dir("k", {
-        file_create("a")
         expect_equal(path_real("a"), path(wd, "/y/a"))
-        unlink("a")
       })
     })
   })
@@ -293,17 +292,6 @@ describe("path_ext_set", {
     expect_equal(path_ext_set("foo", "bar"), "foo.bar")
     expect_equal(path_ext_set("foo", ".bar"), "foo.bar")
   })
-  it ("works with multiple paths (#205)", {
-    multiple_paths <- c("a", "b")
-    expect_equal(path_ext_set(multiple_paths, "csv"), c("a.csv", "b.csv"))
-  })
-  it ("works with multiple extensions (#250)", {
-    multiple_paths <- c("a", "b")
-    multiple_exts <- c("csv", "tsv")
-    expect_equal(path_ext_set(multiple_paths, multiple_exts), c("a.csv", "b.tsv"))
-
-    expect_error(path_ext_set(multiple_paths, c(multiple_exts, "xls")), class = "fs_error", "consistent lengths")
-  })
   it ("works with non-ASCII inputs", {
     skip_if_not_utf8()
 
@@ -416,22 +404,13 @@ describe("path_common", {
 })
 
 describe("path_has_parent", {
-  it("works on single paths", {
-    expect_false(path_has_parent("foo", "bar"))
-    expect_false(path_has_parent("foo", "foo/bar"))
+  expect_false(path_has_parent("foo", "bar"))
+  expect_false(path_has_parent("foo", "foo/bar"))
 
-    expect_false(path_has_parent("/usr/var2/log", "/usr/var"))
+  expect_false(path_has_parent("/usr/var2/log", "/usr/var"))
 
-    expect_true(path_has_parent("foo/bar", "foo"))
-    expect_true(path_has_parent("path/myfiles/myfile", "path/to/files/../../myfiles"))
-  })
-  it("works with multiple paths", {
-    expect_equal(path_has_parent(c("/a/b/c", "x/y"), "/a/b"), c(TRUE, FALSE))
-
-    expect_equal(path_has_parent("/a/b/c", c("/a/b", "/x/y")), c(TRUE, FALSE))
-
-    expect_error(path_has_parent(c("/a/b/c", "x/y"), c("/a/b", "x/y", "foo/bar")), "consistent lengths", class = "invalid_argument")
-  })
+  expect_true(path_has_parent("foo/bar", "foo"))
+  expect_true(path_has_parent("path/myfiles/myfile", "path/to/files/../../myfiles"))
 })
 
 # derived from https://github.com/python/cpython/blob/6f0eb93183519024cb360162bdd81b9faec97ba6/Lib/test/test_posixpath.py#L483
@@ -476,8 +455,6 @@ describe("path_rel", {
   })
 
   it("can be reversed by path_abs", {
-    skip_on_os("windows")
-
     f <- file_temp()
     expect_equal(path_abs(path_rel(f)), f)
 
