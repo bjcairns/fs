@@ -8,21 +8,29 @@
 
 <title>Path computations — path_math • fs</title>
 
+
 <!-- jquery -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
 <!-- Bootstrap -->
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha256-916EbMg70RQy9LHiGkXzG8hSg9EdNy97GazNG/aiY1w=" crossorigin="anonymous" />
-<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous" />
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script>
+
+<!-- bootstrap-toc -->
+<link rel="stylesheet" href="../bootstrap-toc.css">
+<script src="../bootstrap-toc.js"></script>
 
 <!-- Font Awesome icons -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous" />
 
 <!-- clipboard.js -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" integrity="sha256-FiZwavyI2V6+EXO1U+xzLG3IKldpiTFf3153ea9zikQ=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script>
 
-<!-- sticky kit -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/sticky-kit/1.1.3/sticky-kit.min.js" integrity="sha256-c4Rlo1ZozqTPE2RLuvbusY3+SU1pQaJC0TjuhygMipw=" crossorigin="anonymous"></script>
+<!-- headroom.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script>
 
 <!-- pkgdown -->
 <link href="../pkgdown.css" rel="stylesheet">
@@ -30,11 +38,11 @@
 
 
 
-<meta property="og:title" content="Path computations — path_math" />
 
+<meta property="og:title" content="Path computations — path_math" />
 <meta property="og:description" content="All functions apart from path_real() are purely path computations, so the
 files in question do not need to exist on the filesystem." />
-<meta name="twitter:card" content="summary" />
+
 
 <meta name="robots" content="noindex">
 
@@ -48,9 +56,20 @@ files in question do not need to exist on the filesystem." />
 <![endif]-->
 
 
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-115082821-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-115082821-1');
+</script>
+
+
   </head>
 
-  <body>
+  <body data-spy="scroll" data-target="#toc">
     <div class="container template-reference-topic">
       <header>
       <div class="navbar navbar-default navbar-fixed-top" role="navigation">
@@ -64,7 +83,7 @@ files in question do not need to exist on the filesystem." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">fs</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">1.3.1.9000</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">1.5.0.9000</span>
       </span>
     </div>
 
@@ -72,7 +91,7 @@ files in question do not need to exist on the filesystem." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fa fa-home fa-lg"></span>
+    <span class="fas fa fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -91,15 +110,28 @@ files in question do not need to exist on the filesystem." />
     </li>
   </ul>
 </li>
-<li>
-  <a href="../news/index.html">Changelog</a>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    News
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li class="dropdown-header">Releases</li>
+    <li>
+      <a href="https://www.tidyverse.org/blog/2018/01/fs-1.0.0/">Version 1.0.0</a>
+    </li>
+    <li class="divider"></li>
+    <li>
+      <a href="../news/index.html">Changelog</a>
+    </li>
+  </ul>
 </li>
       </ul>
-      
       <ul class="nav navbar-nav navbar-right">
         <li>
-  <a href="https://github.com/r-lib/fs">
-    <span class="fa fa-github fa-lg"></span>
+  <a href="https://github.com/r-lib/fs/">
+    <span class="fab fa fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -110,6 +142,7 @@ files in question do not need to exist on the filesystem." />
 </div><!--/.navbar -->
 
       
+
       </header>
 
 <div class="row">
@@ -121,28 +154,26 @@ files in question do not need to exist on the filesystem." />
     </div>
 
     <div class="ref-description">
-    
     <p>All functions apart from <code>path_real()</code> are purely path computations, so the
 files in question do not need to exist on the filesystem.</p>
-    
     </div>
 
-    <pre class="usage"><span class='fu'>path_real</span>(<span class='no'>path</span>)
+    <pre class="usage"><span class='fu'>path_real</span><span class='op'>(</span><span class='va'>path</span><span class='op'>)</span>
 
-<span class='fu'>path_split</span>(<span class='no'>path</span>)
+<span class='fu'>path_split</span><span class='op'>(</span><span class='va'>path</span><span class='op'>)</span>
 
-<span class='fu'>path_join</span>(<span class='no'>parts</span>)
+<span class='fu'>path_join</span><span class='op'>(</span><span class='va'>parts</span><span class='op'>)</span>
 
-<span class='fu'>path_abs</span>(<span class='no'>path</span>, <span class='kw'>start</span> <span class='kw'>=</span> <span class='st'>"."</span>)
+<span class='fu'>path_abs</span><span class='op'>(</span><span class='va'>path</span>, start <span class='op'>=</span> <span class='st'>"."</span><span class='op'>)</span>
 
-<span class='fu'>path_norm</span>(<span class='no'>path</span>)
+<span class='fu'>path_norm</span><span class='op'>(</span><span class='va'>path</span><span class='op'>)</span>
 
-<span class='fu'>path_rel</span>(<span class='no'>path</span>, <span class='kw'>start</span> <span class='kw'>=</span> <span class='st'>"."</span>)
+<span class='fu'>path_rel</span><span class='op'>(</span><span class='va'>path</span>, start <span class='op'>=</span> <span class='st'>"."</span><span class='op'>)</span>
 
-<span class='fu'>path_common</span>(<span class='no'>path</span>)
+<span class='fu'>path_common</span><span class='op'>(</span><span class='va'>path</span><span class='op'>)</span>
 
-<span class='fu'>path_has_parent</span>(<span class='no'>path</span>, <span class='no'>parent</span>)</pre>
-    
+<span class='fu'>path_has_parent</span><span class='op'>(</span><span class='va'>path</span>, <span class='va'>parent</span><span class='op'>)</span></pre>
+
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
@@ -164,18 +195,18 @@ to split paths.</p></td>
       <td><p>The parent path.</p></td>
     </tr>
     </table>
-    
+
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
     <p>The new path(s) in an <code>fs_path</code> object, which is a character vector
 that also has class <code>fs_path</code>. Except <code>path_split()</code>, which returns a list
 of character vectors of path components.</p>
-    
     <h2 class="hasAnchor" id="functions"><a class="anchor" href="#functions"></a>Functions</h2>
 
-    <ul>
+    
+<ul>
 <li><p><code>path_real</code>: returns the canonical path, eliminating any symbolic
-links and the special references <code>~</code>, <code>~user</code>, <code>.</code>, and <code>..</code>, , i.e. it
+links and the special references <code><a href='https://rdrr.io/r/base/tilde.html'>~</a></code>, <code>~user</code>, <code>.</code>, and <code>..</code>, , i.e. it
 calls <code><a href='path_expand.html'>path_expand()</a></code> (literally) and <code>path_norm()</code> (effectively).</p></li>
 <li><p><code>path_split</code>: splits paths into parts.</p></li>
 <li><p><code>path_join</code>: joins parts together. The inverse of <code>path_split()</code>.
@@ -190,54 +221,53 @@ which can be either an absolute or relative path.</p></li>
 <li><p><code>path_common</code>: finds the common parts of two (or more) paths.</p></li>
 <li><p><code>path_has_parent</code>: determine if a path has a given parent.</p></li>
 </ul>
-    
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
     <div class='dont-index'><p><code><a href='path_expand.html'>path_expand()</a></code> for expansion of user's home directory.</p></div>
-    
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='fu'><a href='create.html'>dir_create</a></span>(<span class='st'>"a"</span>)
-<span class='fu'><a href='create.html'>file_create</a></span>(<span class='st'>"a/b"</span>)
-<span class='fu'><a href='create.html'>link_create</a></span>(<span class='fu'>path_abs</span>(<span class='st'>"a"</span>), <span class='st'>"c"</span>)
+    <pre class="examples"><div class='input'><span class='va'>.old_wd</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/getwd.html'>setwd</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/tempfile.html'>tempdir</a></span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span>
+<span class='fu'><a href='create.html'>dir_create</a></span><span class='op'>(</span><span class='st'>"a"</span><span class='op'>)</span>
+<span class='fu'><a href='create.html'>file_create</a></span><span class='op'>(</span><span class='st'>"a/b"</span><span class='op'>)</span>
+<span class='fu'><a href='create.html'>link_create</a></span><span class='op'>(</span><span class='fu'>path_abs</span><span class='op'>(</span><span class='st'>"a"</span><span class='op'>)</span>, <span class='st'>"c"</span><span class='op'>)</span>
 
 <span class='co'># Realize the path</span>
-<span class='fu'>path_real</span>(<span class='st'>"c/b"</span>)</div><div class='output co'>#&gt; /tmp/RtmpOYGwq9/a/b</div><div class='input'>
+<span class='fu'>path_real</span><span class='op'>(</span><span class='st'>"c/b"</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; /private/var/folders/24/8k48jl6d249_n_qfxwsl6xvm0000gn/T/RtmpndxiJ9/a/b</div><div class='input'>
 <span class='co'># Split a path</span>
-<span class='no'>parts</span> <span class='kw'>&lt;-</span> <span class='fu'>path_split</span>(<span class='st'>"a/b"</span>)
-<span class='no'>parts</span></div><div class='output co'>#&gt; [[1]]
+<span class='va'>parts</span> <span class='op'>&lt;-</span> <span class='fu'>path_split</span><span class='op'>(</span><span class='st'>"a/b"</span><span class='op'>)</span>
+<span class='va'>parts</span>
+</div><div class='output co'>#&gt; [[1]]
 #&gt; [1] "a" "b"
 #&gt; </div><div class='input'>
 <span class='co'># Join it together</span>
-<span class='fu'>path_join</span>(<span class='no'>parts</span>)</div><div class='output co'>#&gt; a/b</div><div class='input'>
+<span class='fu'>path_join</span><span class='op'>(</span><span class='va'>parts</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; a/b</div><div class='input'>
 <span class='co'># Find the absolute path</span>
-<span class='fu'>path_abs</span>(<span class='st'>".."</span>)</div><div class='output co'>#&gt; <span style='color: #000000;background-color: #00BB00;'>/tmp</span><span></div><div class='input'>
+<span class='fu'>path_abs</span><span class='op'>(</span><span class='st'>".."</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; <span style='color: #0000BB;font-weight: bold;'>/private/var/folders/24/8k48jl6d249_n_qfxwsl6xvm0000gn/T</span><span></div><div class='input'>
 <span class='co'># Normalize a path</span>
-<span class='fu'>path_norm</span>(<span class='st'>"a/../b\\c/."</span>)</div><div class='output co'>#&gt; b/c</div><div class='input'>
+<span class='fu'>path_norm</span><span class='op'>(</span><span class='st'>"a/../b\\c/."</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; b/c</div><div class='input'>
 <span class='co'># Compute a relative path</span>
-<span class='fu'>path_rel</span>(<span class='st'>"/foo/abc"</span>, <span class='st'>"/foo/bar/baz"</span>)</div><div class='output co'>#&gt; ../../abc</div><div class='input'>
+<span class='fu'>path_rel</span><span class='op'>(</span><span class='st'>"/foo/abc"</span>, <span class='st'>"/foo/bar/baz"</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; ../../abc</div><div class='input'>
 <span class='co'># Find the common path between multiple paths</span>
-<span class='fu'>path_common</span>(<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='st'>"/foo/bar/baz"</span>, <span class='st'>"/foo/bar/abc"</span>, <span class='st'>"/foo/xyz/123"</span>))</div><div class='output co'>#&gt; /foo</div><div class='input'>
+<span class='fu'>path_common</span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"/foo/bar/baz"</span>, <span class='st'>"/foo/bar/abc"</span>, <span class='st'>"/foo/xyz/123"</span><span class='op'>)</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; /foo</div><div class='input'>
 <span class='co'># Cleanup</span>
-<span class='fu'><a href='delete.html'>dir_delete</a></span>(<span class='st'>"a"</span>)
-<span class='fu'><a href='delete.html'>link_delete</a></span>(<span class='st'>"c"</span>)</div></span></pre>
+<span class='fu'><a href='delete.html'>dir_delete</a></span><span class='op'>(</span><span class='st'>"a"</span><span class='op'>)</span>
+<span class='fu'><a href='delete.html'>link_delete</a></span><span class='op'>(</span><span class='st'>"c"</span><span class='op'>)</span>
+<span class='fu'><a href='https://rdrr.io/r/base/getwd.html'>setwd</a></span><span class='op'>(</span><span class='va'>.old_wd</span><span class='op'>)</span>
+</div></span></pre>
   </div>
-  <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
-    <h2>Contents</h2>
-    <ul class="nav nav-pills nav-stacked">
-      <li><a href="#arguments">Arguments</a></li>
-      
-      <li><a href="#value">Value</a></li>
-
-      <li><a href="#functions">Functions</a></li>
-
-      <li><a href="#see-also">See also</a></li>
-      
-      <li><a href="#examples">Examples</a></li>
-    </ul>
-
+  <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
+    <nav id="toc" data-toggle="toc" class="sticky-top">
+      <h2 data-toc-skip>Contents</h2>
+    </nav>
   </div>
 </div>
+
 
       <footer>
       <div class="copyright">
@@ -245,13 +275,16 @@ which can be either an absolute or relative path.</p></li>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.3.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
+
       </footer>
    </div>
 
   
 
+
   </body>
 </html>
+
 
